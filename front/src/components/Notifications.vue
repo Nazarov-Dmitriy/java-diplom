@@ -43,6 +43,8 @@
             // const router = useRouter();
 
             const notifications = computed(() => {
+                console.log(store);
+                
                 return store.state.notifications.filter((n: any) => !n.hidden);
             });
 

@@ -164,6 +164,7 @@
                             file.selected = false;
                             file.ext = file.filename.match(/\.\w+$/g)[0].slice(1);
                             files.push(file);
+                           
                         }
 
                         // Сбрасываем счетчик выделенных файлов

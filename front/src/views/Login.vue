@@ -106,6 +106,8 @@
                         'name': 'Home'
                     });
                 }).catch(res => {
+                    console.log(res);
+                    
                     // Ошибка при авторизации
                     if (res.data.email.length > 0) {
                         formErrors.email = res.data.email;
