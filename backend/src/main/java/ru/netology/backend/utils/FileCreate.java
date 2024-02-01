@@ -2,7 +2,7 @@ package ru.netology.backend.utils;
 
 import org.springframework.web.multipart.MultipartFile;
 import ru.netology.backend.exception.InternalServerError;
-import ru.netology.backend.loger.Loger;
+//import ru.netology.backend.loger.Loger;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -19,7 +19,7 @@ public class FileCreate {
                 stream.write(bytes);
                 stream.close();
             } catch (Exception e) {
-                Loger.write("ERROR", "Вам не удалось загрузить " + name + "ошибка " + e.getMessage());
+//                Loger.write("ERROR", "Вам не удалось загрузить " + name + "ошибка " + e.getMessage());
                 throw new InternalServerError(" Error getting file list");
             }
         }

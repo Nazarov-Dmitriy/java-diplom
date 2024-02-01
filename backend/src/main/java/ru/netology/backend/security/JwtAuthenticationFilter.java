@@ -12,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import ru.netology.backend.loger.Loger;
 
 import java.io.IOException;
 
@@ -30,25 +29,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain)
             throws ServletException, IOException {
-
-
         String token = jwtUtilities.getToken(request);
-
-
         if (token != null && jwtUtilities.validateToken(token)) {
             String login = jwtUtilities.extractUsername(token);
-
             UserDetails userDetails = customerUserDetailsService.loadUserByUsername(login);
             if (userDetails != null) {
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails.getUsername(), null, userDetails.getAuthorities());
-
-                Loger.write("INFO", "authenticated user with login :{}" + login);
+                logger.error("authenticated user with login :{}" + login);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             }
         }
         filterChain.doFilter(request, response);
     }
-
 }

@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import ru.netology.backend.loger.Loger;
+import ru.netology.backend.exception.Unauthorized;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -56,7 +56,6 @@ public class JwtUtilities {
     }
 
     public String generateToken(String email, List<String> roles) {
-
         return Jwts.builder().setSubject(email).claim("role", roles).setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(Date.from(Instant.now().plus(jwtExpiration, ChronoUnit.MILLIS)))
                 .signWith(SignatureAlgorithm.HS256, secret).compact();
@@ -66,24 +65,18 @@ public class JwtUtilities {
         try {
             Jwts.parser().setSigningKey(secret).parseClaimsJws(token);
             return true;
-        } catch (SignatureException e) {
-            Loger.write("Error", "Invalid JWT signature trace: {}" + e);
-        } catch (MalformedJwtException | ExpiredJwtException | UnsupportedJwtException e) {
-            Loger.write("Error", "Invalid JWT token trace: {}" + e);
-        } catch (IllegalArgumentException e) {
-            Loger.write("Error", "JWT token compact of handler are invalid trace: {}" + e);
+        } catch (SignatureException | MalformedJwtException | ExpiredJwtException | UnsupportedJwtException |
+                 IllegalArgumentException e) {
+            throw new Unauthorized("Unauthorized error");
         }
-        return false;
     }
 
     public String getToken(HttpServletRequest httpServletRequest) throws IOException {
         final String bearerToken = httpServletRequest.getHeader("Auth-Token");
-
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7, bearerToken.length());
         }
         return null;
     }
-
 };
 

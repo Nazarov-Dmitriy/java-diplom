@@ -28,7 +28,6 @@ public class SecurityConfig {
     private static final ClearSiteDataHeaderWriter.Directive[] SOURCE =
             {CACHE, COOKIES, STORAGE, EXECUTION_CONTEXTS};
 
-
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
@@ -44,7 +43,6 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers("/login", "/logout").permitAll()
                         .anyRequest().authenticated()
@@ -52,13 +50,11 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable
                 )
                 .logout(logout -> logout
-                       .logoutUrl("/logout")
+                        .logoutUrl("/logout")
                         .logoutSuccessUrl("/login")
                         .addLogoutHandler(new HeaderWriterLogoutHandler(new ClearSiteDataHeaderWriter(SOURCE)))
-                )
-        ;
+                );
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 }

@@ -7,7 +7,8 @@ import lombok.ToString;
 @Getter
 @AllArgsConstructor
 @ToString
-public class ErrorMessage {
+public class ErrorMessageLogin {
     private int id;
-    private String description;
+    private String[] email;
+    private String[] password;
 }

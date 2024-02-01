@@ -9,8 +9,7 @@
 В docker compose 4 контейнера
 1. БД postgres
 2. pgadmin4 порт 5050 (данные для ввхода в docker-compose)
-3. Frontend порт 8080
-4. Backend порт 5500
+3. Backend порт 5500
 
 ## Описание
 
