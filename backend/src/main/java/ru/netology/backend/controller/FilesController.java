@@ -1,7 +1,6 @@
 package ru.netology.backend.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,14 +9,12 @@ import ru.netology.backend.dto.EditFileNameDto;
 import ru.netology.backend.dto.UserFile;
 import ru.netology.backend.servise.FileServise;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 
 
 @RestController
 public class FilesController {
-    @Value("${folder-files}")
-    private String folderFiles;
     private final FileServise fileServise;
 
     public FilesController(FileServise fileServise) {
@@ -36,8 +33,8 @@ public class FilesController {
     }
 
     @GetMapping("/file")
-    public ResponseEntity<Resource> downloadFile(@RequestParam String filename, HttpServletRequest req) throws FileNotFoundException {
-        return fileServise.downloadFile(filename, folderFiles, req);
+    public ResponseEntity<Resource> downloadFile(@RequestParam String filename, HttpServletRequest req) throws IOException {
+        return fileServise.downloadFile(filename, req);
     }
 
     @PutMapping("/file")

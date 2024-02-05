@@ -20,8 +20,6 @@ import java.util.function.Function;
 @Slf4j
 @Component
 public class JwtUtilities {
-
-
     @Value("${jwt.secret}")
     private String secret;
 

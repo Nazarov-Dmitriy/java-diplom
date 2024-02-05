@@ -11,6 +11,8 @@ import ru.netology.backend.exception.BadRequest;
 import ru.netology.backend.exception.InternalServerError;
 import ru.netology.backend.exception.Unauthorized;
 
+import java.util.UUID;
+
 
 @RestControllerAdvice
 public class ExceptionHandlerAdvice {
@@ -25,12 +27,13 @@ public class ExceptionHandlerAdvice {
         String targetBase = serverScheme + "://" + serverHost + ":" + serverPort + contextPath;
         StringBuilder logText = new StringBuilder();
         ErrorMessageLogin error;
+        UUID id = UUID.randomUUID();
         if (exception.getMessage().equals("email")) {
-            error = new ErrorMessageLogin(400, new String[]{"Неправильный email"}, new String[]{"Неправильный пароль"});
+            error = new ErrorMessageLogin(id, new String[]{"Неправильный email"}, new String[]{"Неправильный пароль"});
             logText.append("Incorect emael ").append("path ").append(targetBase);
             logger.error(String.valueOf(logText));
         } else {
-            error = new ErrorMessageLogin(400, new String[]{}, new String[]{"Неправильный пароль"});
+            error = new ErrorMessageLogin(id, new String[]{}, new String[]{"Неправильный пароль"});
             logText.append("Incorect password ").append("path ").append(targetBase);
             logger.error(String.valueOf(logText));
         }
@@ -45,7 +48,8 @@ public class ExceptionHandlerAdvice {
         String contextPath = req.getServletPath();
         String targetBase = serverScheme + "://" + serverHost + ":" + serverPort + contextPath;
         StringBuilder logText = new StringBuilder();
-        ErrorMessage errorMessage = new ErrorMessage(401, exception.getMessage());
+        UUID id = UUID.randomUUID();
+        ErrorMessage errorMessage = new ErrorMessage(id, exception.getMessage());
         logText.append(exception.getMessage()).append(" ").append("path ").append(targetBase);
         logger.error(String.valueOf(logText));
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorMessage);
@@ -59,7 +63,8 @@ public class ExceptionHandlerAdvice {
         String contextPath = req.getServletPath();
         StringBuilder logText = new StringBuilder();
         String targetBase = serverScheme + "://" + serverHost + ":" + serverPort + contextPath;
-        ErrorMessage errorMessage = new ErrorMessage(500, exception.getMessage());
+        UUID id = UUID.randomUUID();
+        ErrorMessage errorMessage = new ErrorMessage(id, exception.getMessage());
         logText.append(exception.getMessage()).append(" ").append("path ").append(targetBase);
         logger.error(String.valueOf(logText));
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);

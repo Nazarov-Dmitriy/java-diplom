@@ -1,7 +1,7 @@
 package ru.netology.backend.servise;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.transaction.Transactional;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -18,23 +18,18 @@ import ru.netology.backend.model.FilesModel;
 import ru.netology.backend.model.Users;
 import ru.netology.backend.repository.FileRepository;
 import ru.netology.backend.repository.UserRepository;
-import ru.netology.backend.utils.FileCreate;
-import ru.netology.backend.utils.FolderCreate;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class FileServise {
-    @Value("${folder-files}")
-    private String folderFiles;
     private final FileRepository fileRepository;
     private final UserRepository userRepository;
 
@@ -43,15 +38,15 @@ public class FileServise {
         this.userRepository = userRepository;
     }
 
+    @Transactional
     public ResponseEntity<Void> addFile(String fileName, MultipartFile file, HttpServletRequest req) {
         try {
             if (!fileName.isEmpty()) {
                 var username = (String) req.getSession().getAttribute("username");
-                var path = username + "/" + fileName;
-                FolderCreate.createFolder(folderFiles + username);
-                FileCreate.createFile(file, path);
                 Optional<Users> user = userRepository.findByLogin(username);
-                FilesModel build = FilesModel.builder().name(fileName).users(user.get()).build();
+                byte[] photoBytes = file.getBytes();
+                long fileLength = file.getSize();
+                FilesModel build = FilesModel.builder().name(fileName).users(user.get()).content(photoBytes).size(fileLength).build();
                 fileRepository.save(build);
                 return new ResponseEntity<>(HttpStatus.OK);
             } else {
@@ -59,19 +54,16 @@ public class FileServise {
             }
         } catch (EmptyResultDataAccessException e) {
             throw new BadRequest("Error input data");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
     public ResponseEntity<Void> deleteFile(String filename, HttpServletRequest req) {
         try {
             if (!filename.isEmpty()) {
-                var usernaname = req.getSession().getAttribute("username");
-                File file = new File(folderFiles + usernaname + "/" + filename);
-                if (file.delete()) {
-                    fileRepository.deleteFile(filename);
-                } else {
-                    throw new InternalServerError("Error delet file");
-                }
+                var userId = (long) req.getSession().getAttribute("user-id");
+                fileRepository.deleteFile(filename, userId);
                 return new ResponseEntity<>(HttpStatus.OK);
             } else {
                 throw new BadRequest("Error input data");
@@ -81,36 +73,33 @@ public class FileServise {
         }
     }
 
-    public ResponseEntity<Resource> downloadFile(String filename, String folderFiles, HttpServletRequest req) throws FileNotFoundException {
-        if (!filename.isEmpty()) {
-            var usernaname = (String) req.getSession().getAttribute("username");
-            final var filePath = Path.of(folderFiles + usernaname + '/' + filename);
-            final String mimeType;
-            try {
-                mimeType = Files.probeContentType(filePath);
-            } catch (IOException e) {
-                throw new InternalServerError("Error upload file");
+    public ResponseEntity<Resource> downloadFile(String filename, HttpServletRequest req) throws IOException {
+        try {
+            if (!filename.isEmpty()) {
+                final String mimeType;
+                var userId = (long) req.getSession().getAttribute("user-id");
+                var fileModal = fileRepository.downloadFile(filename, userId);
+                File file = new File(filename);
+                FileOutputStream os = new FileOutputStream(file);
+                os.write(fileModal.getContent());
+                os.close();
+                mimeType = Files.probeContentType(file.toPath());
+                InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+                return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName()).contentType(MediaType.valueOf(mimeType)).contentLength(file.length()) //
+                        .body(resource);
+            } else {
+                throw new BadRequest("Error input data");
             }
-            File file = new File(String.valueOf(filePath));
-            InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
-            return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName()).contentType(MediaType.valueOf(mimeType)).contentLength(file.length()) //
-                    .body(resource);
-        } else {
-            throw new BadRequest("Error input data");
+        } catch (IOException e) {
+            throw new InternalServerError("Error upload file");
         }
     }
 
     public ResponseEntity<Void> editName(String filename, String ediFilename, HttpServletRequest req) {
         try {
             if (!filename.isEmpty() || !ediFilename.isEmpty()) {
-                var usernaname = req.getSession().getAttribute("username");
-                File file = new File(folderFiles + usernaname + "/" + filename);
-                File newFile = new File(folderFiles + usernaname + "/" + ediFilename);
-                if (file.renameTo(newFile)) {
-                    fileRepository.editName(filename, ediFilename);
-                } else {
-                    throw new InternalServerError("Error upload file");
-                }
+                var userId = (long) req.getSession().getAttribute("user-id");
+                fileRepository.editName(filename, ediFilename, userId);
                 return new ResponseEntity<>(HttpStatus.OK);
             } else {
                 throw new BadRequest("Error input data");
@@ -125,11 +114,9 @@ public class FileServise {
             if (limit > 0) {
                 List<UserFile> arrFiles = new ArrayList<>();
                 var userId = (long) req.getSession().getAttribute("user-id");
-                var usernaname = req.getSession().getAttribute("username");
                 var files = fileRepository.getList(userId, limit);
                 for (FilesModel item : files) {
-                    File file = new File(folderFiles + usernaname + "/" + item.getName());
-                    arrFiles.add(new UserFile(file.getName(), file.length()));
+                    arrFiles.add(new UserFile(item.getName(), item.getSize()));
                 }
                 return new ResponseEntity<>(arrFiles, HttpStatus.OK);
             } else {

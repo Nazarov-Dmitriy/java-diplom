@@ -23,5 +23,12 @@ public class FilesModel {
     @ManyToOne(optional = false)
     @JoinColumn(name = "files_id", referencedColumnName = "id")
     private Users users;
+
+    @Lob
+    @Column(nullable = false)
+    private byte[] content;
+
+    @Column(nullable = false)
+    private long size;
 }
 
